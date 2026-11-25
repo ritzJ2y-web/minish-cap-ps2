@@ -1,53 +1,11 @@
 EE_BIN = MINISH_PS2.ELF
 
 GAME_SRCS = $(filter-out picori_src/src/eeprom.c, $(wildcard picori_src/src/*.c)) \
-            $(wildcard picori_src/src/playerItem/*.c) \
-            $(wildcard picori_src/src/enemy/*.c) \
-            $(wildcard picori_src/src/npc/*.c) \
-            $(wildcard picori_src/src/object/*.c) \
-            $(wildcard picori_src/src/projectile/*.c) \
-            $(wildcard picori_src/src/manager/*.c) \
-            $(wildcard picori_src/src/item/*.c) \
-            $(wildcard picori_src/src/subtask/*.c) \
-            $(wildcard picori_src/src/menu/*.c) \
-            $(wildcard picori_src/src/worldEvent/*.c) \
-            picori_src/src/data/figurineMenuData.c \
-            picori_src/src/data/hitbox.c \
-            picori_src/src/data/areaMetadata.c \
-            picori_src/src/data/caveBorderMapData.c \
-            picori_src/src/data/data_080046A4.c \
-            picori_src/src/data/mapActTileToSurfaceType.c \
-            picori_src/src/data/objPalettes.c \
-            picori_src/src/data/screenTransitions.c \
-            picori_src/src/data/transitions.c
+            $(wildcard picori_src/src/*/*.c)
 
-PORT_C_SRCS = picori_src/port/ppu/src/virtuappu.c \
-              picori_src/port/ppu/src/mode1.c \
-              picori_src/port/port_rom.c \
-              picori_src/port/port_gba_mem.c \
-              picori_src/port/port_hdma.c \
-              picori_src/port/port_save.c \
-              picori_src/port/port_animation.c \
-              picori_src/port/port_math.c \
-              picori_src/port/port_text_render.c \
-              picori_src/port/port_gameplay_stubs.c \
-              picori_src/port/port_m4a_stubs.c \
-              picori_src/port/port_room_funcs.c \
-              picori_src/port/port_script_funcs.c \
-              picori_src/port/port_draw.c \
-              picori_src/port/port_stubs.c \
-              picori_src/port/stubs_autogen.c \
-              picori_src/port/data_stubs_autogen.c \
-              picori_src/port/port_rom_stubs.c \
-              picori_src/port/port_linked_stubs.c \
-              picori_src/port/port_region_data.c \
-              picori_src/port/flag_remap_generated.c \
-              picori_src/port/port_inline_ptrs.c \
-              picori_src/port/port_script_addrs.c \
-              picori_src/port/port_offset_remap.c \
-              picori_src/port/port_figurines.c \
-              picori_src/port/port_roll_attack_macro.c \
-              picori_src/port/port_analog_movement.c
+PORT_C_SRCS = $(filter-out picori_src/port/port_bios.c picori_src/port/port_softslots.c picori_src/port/port_ra*.c picori_src/port/port_gba_shadow.c picori_src/port/port_discord_rpc.c picori_src/port/port_repro*.c picori_src/port/port_debug_actions_test.c picori_src/port/port_memory_watch_test.c picori_src/port/port_rng_golden_test.c picori_src/port/port_gpu_obj_cull.c picori_src/port/port_a11y*.c picori_src/port/port_quicksave.c picori_src/port/port_practice.c picori_src/port/port_update_check.c picori_src/port/port_rom_picker.c picori_src/port/port_upscale.c picori_src/port/port_filter.c picori_src/port/port_shm_framebuffer.c picori_src/port/port_menu_background.c picori_src/port/port_bugreport_state.c picori_src/port/port_debug_actions.c picori_src/port/port_debug_entities.c picori_src/port/port_debug_memory_watch.c, $(wildcard picori_src/port/*.c)) \
+              picori_src/port/ppu/src/virtuappu.c \
+              picori_src/port/ppu/src/mode1.c
 
 ALL_C_SRCS = main_ps2.c ps2_bridge.c $(GAME_SRCS) $(PORT_C_SRCS)
 EE_OBJS = $(ALL_C_SRCS:.c=.o) usbd_irx.o bdm_irx.o bdmfs_fatfs_irx.o usbmass_bd_irx.o
