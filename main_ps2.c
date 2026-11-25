@@ -29,7 +29,6 @@ extern unsigned int size_bdmfs_fatfs_irx;
 extern unsigned char usbmass_bd_irx[];
 extern unsigned int size_usbmass_bd_irx;
 extern void AgbMain(void);
-extern void virtuappu_init(void);
 extern void PS2_SetLoadedRom(unsigned char *buf, size_t size);
 
 static char *padBuf = NULL;
@@ -116,7 +115,6 @@ int main(int argc, char *argv[]) {
     gbaTex.Filter = GS_FILTER_NEAREST;
 
     memset(virtuappu_frame_buffer, 0, sizeof(virtuappu_frame_buffer));
-    virtuappu_init();
 
     FILE *rom = NULL;
     for (int i = 0; i < 25; i++) {
