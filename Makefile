@@ -1,6 +1,6 @@
 EE_BIN = MINISH_PS2.ELF
 
-GAME_SRCS = $(wildcard picori_src/src/*.c) \
+GAME_SRCS = $(filter-out picori_src/src/eeprom.c, $(wildcard picori_src/src/*.c)) \
             $(wildcard picori_src/src/playerItem/*.c) \
             $(wildcard picori_src/src/enemy/*.c) \
             $(wildcard picori_src/src/npc/*.c) \
