@@ -1,6 +1,8 @@
 EE_BIN = MINISH_PS2.ELF
 EE_OBJS = main_ps2.o usbd_irx.o bdm_irx.o bdmfs_fatfs_irx.o usbmass_bd_irx.o
-EE_LIBS = -ldebug -lpad -lpatches
+EE_INCS = -I$(PS2DEV)/gsKit/include
+EE_LDFLAGS = -L$(PS2DEV)/gsKit/lib
+EE_LIBS = -lgskit -ldmakit -ldebug -lpad -lpatches
 
 all: $(EE_BIN)
 
