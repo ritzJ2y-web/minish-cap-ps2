@@ -14,10 +14,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Baixar fonte do Project Picori e listar estrutura
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          USER="999sian"
-          PROJ="tmc"
-          git clone --depth 1 "https://github.com{USER}/${PROJ}.git" picori_src
+          gh repo clone 999sian/tmc picori_src -- --depth 1
           echo "=== PASTAS NA RAIZ ==="
           ls -la picori_src
           echo "=== ARQUIVOS DE PLATAFORMA ==="
