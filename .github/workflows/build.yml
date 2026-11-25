@@ -1,4 +1,4 @@
-name: Compilar PS2 ELF
+name: Compilar Minish Cap PS2
 
 on:
   push:
@@ -13,22 +13,19 @@ jobs:
       - name: Baixar codigo do repositorio
         uses: actions/checkout@v4
 
-      - name: Extrair 4 arquivos centrais do port
+      - name: Baixar fonte do Project Picori
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh repo clone 999sian/tmc picori_src -- --depth 1
-          echo "=== PORT_MAIN.C ===" > core_port.txt
-          cat picori_src/port/port_main.c >> core_port.txt
-          echo "=== PORT_BIOS.C ===" >> core_port.txt
-          cat picori_src/port/port_bios.c >> core_port.txt
-          echo "=== VIRTUAPPU.H ===" >> core_port.txt
-          cat picori_src/port/ppu/include/virtuappu.h >> core_port.txt
-          echo "=== PORT_PPU.CPP (INICIO) ===" >> core_port.txt
-          head -n 250 picori_src/port/port_ppu.cpp >> core_port.txt
 
-      - name: Disponibilizar core_port para download
+      - name: Compilar ELF Completo de PS2
+        run: |
+          sed -i 's/^        /\t/g; s/^    /\t/g; s/^  /\t/g' Makefile
+          docker run --rm -u root -v "$PWD:/src" -w /src ps2dev/ps2dev:latest sh -c "apk add --no-cache make && make -j4"
+
+      - name: Disponibilizar ELF para download
         uses: actions/upload-artifact@v4
         with:
-          name: CORE_PORT
-          path: core_port.txt
+          name: MINISH_PS2_ELF
+          path: MINISH_PS2.ELF
