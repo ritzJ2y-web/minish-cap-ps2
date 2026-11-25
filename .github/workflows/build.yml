@@ -15,7 +15,7 @@ jobs:
 
       - name: Compilar ELF de PS2
         run: |
-          docker run --rm -v "$PWD:/src" -w /src ps2dev/ps2dev:latest sh -c "export PS2DEV=/usr/local/ps2dev; export PS2SDK=\$PS2DEV/ps2sdk; export PATH=\$PATH:\$PS2DEV/bin:\$PS2DEV/ee/bin:\$PS2DEV/iop/bin:\$PS2DEV/dvp/bin:\$PS2SDK/bin; make"
+          docker run --rm -u root -v "$PWD:/src" -w /src ps2dev/ps2dev:latest make
 
       - name: Disponibilizar ELF para download
         uses: actions/upload-artifact@v4
