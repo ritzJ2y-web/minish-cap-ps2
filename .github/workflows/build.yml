@@ -13,20 +13,22 @@ jobs:
       - name: Baixar codigo do repositorio
         uses: actions/checkout@v4
 
-      - name: Extrair cabecalhos da pasta port
+      - name: Extrair 4 arquivos centrais do port
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh repo clone 999sian/tmc picori_src -- --depth 1
-          echo "=== ESTRUTURA DA PASTA PORT ===" > relatorio_port.txt
-          find picori_src/port >> relatorio_port.txt
-          echo "=== XMAKE.LUA ===" >> relatorio_port.txt
-          cat picori_src/xmake.lua >> relatorio_port.txt
-          echo "=== CABECALHOS EM PORT ===" >> relatorio_port.txt
-          head -n 200 picori_src/port/*.h picori_src/port/*/*.h >> relatorio_port.txt 2>/dev/null || true
+          echo "=== PORT_MAIN.C ===" > core_port.txt
+          cat picori_src/port/port_main.c >> core_port.txt
+          echo "=== PORT_BIOS.C ===" >> core_port.txt
+          cat picori_src/port/port_bios.c >> core_port.txt
+          echo "=== VIRTUAPPU.H ===" >> core_port.txt
+          cat picori_src/port/ppu/include/virtuappu.h >> core_port.txt
+          echo "=== PORT_PPU.CPP (INICIO) ===" >> core_port.txt
+          head -n 250 picori_src/port/port_ppu.cpp >> core_port.txt
 
-      - name: Disponibilizar relatorio para download
+      - name: Disponibilizar core_port para download
         uses: actions/upload-artifact@v4
         with:
-          name: RELATORIO_PORT
-          path: relatorio_port.txt
+          name: CORE_PORT
+          path: core_port.txt
