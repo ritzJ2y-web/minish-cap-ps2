@@ -12,6 +12,9 @@
 #include <sbv_patches.h>
 #include <gsKit.h>
 #include <dmaKit.h>
+#include "global.h"
+#include "virtuappu.h"
+#include "port_rom.h"
 
 extern unsigned char usbd_irx[];
 extern unsigned int size_usbd_irx;
@@ -21,113 +24,101 @@ extern unsigned char bdmfs_fatfs_irx[];
 extern unsigned int size_bdmfs_fatfs_irx;
 extern unsigned char usbmass_bd_irx[];
 extern unsigned int size_usbmass_bd_irx;
+extern void AgbMain(void);
 
-static char padBuf[256] __attribute__((aligned(64)));
+static char padBuf __attribute__((aligned(64)));
+static GSGLOBAL *gsGlobal = NULL;
+static GSTEXTURE gbaTex;
 
-// Framebuffer virtual do GBA (240x160 pixels em 16-bit RGB555)
 #define GBA_W 240
 #define GBA_H 160
-static u16 gba_framebuffer[GBA_W * GBA_H] __attribute__((aligned(64)));
 
-void init_drivers() {
+void init_drivers(void) {
     SifInitRpc(0);
     while (!SifIopReset("", 0)) {};
     while (!SifIopSync()) {};
     SifInitRpc(0);
-
     sbv_patch_enable_lmb();
     sbv_patch_disable_prefix_check();
-
     SifLoadModule("rom0:SIO2MAN", 0, NULL);
     SifLoadModule("rom0:PADMAN", 0, NULL);
-
     SifExecModuleBuffer(usbd_irx, size_usbd_irx, 0, NULL, NULL);
     SifExecModuleBuffer(bdm_irx, size_bdm_irx, 0, NULL, NULL);
     SifExecModuleBuffer(bdmfs_fatfs_irx, size_bdmfs_fatfs_irx, 0, NULL, NULL);
     SifExecModuleBuffer(usbmass_bd_irx, size_usbmass_bd_irx, 0, NULL, NULL);
 }
 
-int main(int argc, char *argv[]) {
-    init_drivers();
-
-    padInit(0);
-    padPortOpen(0, 0, padBuf);
-
-    // Carrega a ROM de 16MB para a RAM
-    FILE *rom = NULL;
-    unsigned char *rom_buffer = NULL;
-    for (int i = 0; i < 25; i++) {
-        rom = fopen("mass:/minish.gba", "rb");
-        if (rom != NULL) break;
-        usleep(200000);
-    }
-
-    if (rom != NULL) {
-        fseek(rom, 0, SEEK_END);
-        long tamanho = ftell(rom);
-        fseek(rom, 0, SEEK_SET);
-        rom_buffer = (unsigned char *)malloc(tamanho);
-        if (rom_buffer) fread(rom_buffer, 1, tamanho, rom);
-        fclose(rom);
-    }
-
-    // Inicializa o motor grafico real do PS2 (gsKit)
-    dmaKit_init(D_CTRL_RELE_OFF, D_CTRL_MFD_OFF, D_CTRL_STS_UNSPEC, D_CTRL_STD_OFF, D_CTRL_RCYC_8, 1 << DMA_CHANNEL_GIF);
-    dmaKit_chan_init(DMA_CHANNEL_GIF);
-
-    GSGLOBAL *gsGlobal = gsKit_init_global();
-    gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
-    gsKit_init_screen(gsGlobal);
-    gsKit_mode_switch(gsGlobal, GS_ONESHOT);
-
-    // Configura a textura de 240x160 que vai receber os quadros do jogo
-    GSTEXTURE gbaTex;
-    memset(&gbaTex, 0, sizeof(GSTEXTURE));
-    gbaTex.Width = GBA_W;
-    gbaTex.Height = GBA_H;
-    gbaTex.PSM = GS_PSM_CT16; // Formato 16-bit identico ao do GBA!
-    gbaTex.Mem = (u32 *)gba_framebuffer;
-    gbaTex.Vram = gsKit_vram_alloc(gsGlobal, gsKit_texture_size(GBA_W, GBA_H, GS_PSM_CT16), GSKIT_ALLOC_USERBUFFER);
-    gbaTex.Filter = GS_FILTER_NEAREST; // Pixel art nitido
-
+void PS2_PresentFrameAndPollInput(void) {
     struct padButtonStatus buttons;
-    u32 paddata = 0;
-    int box_x = 100, box_y = 60;
-    u16 cor_fundo = rom_buffer ? 0x2945 : 0x001F; // Verde se a ROM carregou, Vermelho se falhou
-
-    while (1) {
+    u16 gba_keys = 0x03FF;
+    int state = padGetState(0, 0);
+    if (state == PAD_STATE_STABLE || state == PAD_STATE_FINDCTP1) {
         if (padRead(0, 0, &buttons) != 0) {
-            paddata = 0xffff ^ buttons.btns;
-            if (paddata & PAD_LEFT && box_x > 0) box_x -= 2;
-            if (paddata & PAD_RIGHT && box_x < GBA_W - 20) box_x += 2;
-            if (paddata & PAD_UP && box_y > 0) box_y -= 2;
-            if (paddata & PAD_DOWN && box_y < GBA_H - 20) box_y += 2;
-            if (paddata & PAD_CROSS) cor_fundo = 0x7C00; // Azul ao apertar X
-            if (paddata & PAD_CIRCLE) cor_fundo = 0x03E0; // Verde vivo ao apertar O
+            u32 pad = 0xffff ^ buttons.btns;
+            if (pad & PAD_CROSS)  gba_keys &= ~(1 << 0);
+            if (pad & PAD_CIRCLE) gba_keys &= ~(1 << 1);
+            if (pad & PAD_SELECT) gba_keys &= ~(1 << 2);
+            if (pad & PAD_START)  gba_keys &= ~(1 << 3);
+            if (pad & PAD_RIGHT)  gba_keys &= ~(1 << 4);
+            if (pad & PAD_LEFT)   gba_keys &= ~(1 << 5);
+            if (pad & PAD_UP)     gba_keys &= ~(1 << 6);
+            if (pad & PAD_DOWN)   gba_keys &= ~(1 << 7);
+            if (pad & PAD_R1)     gba_keys &= ~(1 << 8);
+            if (pad & PAD_L1)     gba_keys &= ~(1 << 9);
+            if (buttons.ljoy_h < 60)  gba_keys &= ~(1 << 5);
+            if (buttons.ljoy_h > 195) gba_keys &= ~(1 << 4);
+            if (buttons.ljoy_v < 60)  gba_keys &= ~(1 << 6);
+            if (buttons.ljoy_v > 195) gba_keys &= ~(1 << 7);
         }
-
-        // Desenha no framebuffer 240x160 (exatamente como o jogo fara)
-        for (int y = 0; y < GBA_H; y++) {
-            for (int x = 0; x < GBA_W; x++) {
-                if (x >= box_x && x < box_x + 20 && y >= box_y && y < box_y + 20) {
-                    gba_framebuffer[y * GBA_W + x] = 0x7FFF; // Quadrado branco (Link)
-                } else {
-                    gba_framebuffer[y * GBA_W + x] = cor_fundo;
-                }
-            }
-        }
-
-        // Envia o quadro 240x160 para a placa de video do PS2 e estica na TV
+    }
+    *(vu16 *)(gIoMem + 0x130) = gba_keys;
+    if (gsGlobal && virtuappu_frame_buffer) {
+        gbaTex.Mem = (u32 *)virtuappu_frame_buffer;
         gsKit_texture_upload(gsGlobal, &gbaTex);
         gsKit_clear(gsGlobal, GS_SETREG_RGBAQ(0x00, 0x00, 0x00, 0x00, 0x00));
         gsKit_prim_sprite_texture(gsGlobal, &gbaTex,
             0.0f, 0.0f, 0.0f, 0.0f,
             gsGlobal->Width, gsGlobal->Height, GBA_W, GBA_H,
             1, GS_SETREG_RGBAQ(0x80, 0x80, 0x80, 0x80, 0x00));
-
         gsKit_queue_exec(gsGlobal);
         gsKit_sync_flip(gsGlobal);
     }
+}
 
+int main(int argc, char *argv[]) {
+    init_drivers();
+    padInit(0);
+    padPortOpen(0, 0, padBuf);
+    dmaKit_init(D_CTRL_RELE_OFF, D_CTRL_MFD_OFF, D_CTRL_STS_UNSPEC, D_CTRL_STD_OFF, D_CTRL_RCYC_8, 1 << DMA_CHANNEL_GIF);
+    dmaKit_chan_init(DMA_CHANNEL_GIF);
+    gsGlobal = gsKit_init_global();
+    gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
+    gsKit_init_screen(gsGlobal);
+    gsKit_mode_switch(gsGlobal, GS_ONESHOT);
+    memset(&gbaTex, 0, sizeof(GSTEXTURE));
+    gbaTex.Width = GBA_W;
+    gbaTex.Height = GBA_H;
+    gbaTex.PSM = GS_PSM_CT32;
+    gbaTex.Vram = gsKit_vram_alloc(gsGlobal, gsKit_texture_size(GBA_W, GBA_H, GS_PSM_CT32), GSKIT_ALLOC_USERBUFFER);
+    gbaTex.Filter = GS_FILTER_NEAREST;
+    virtuappu_init();
+    FILE *rom = NULL;
+    for (int i = 0; i < 25; i++) {
+        rom = fopen("mass:/minish.gba", "rb");
+        if (rom != NULL) break;
+        usleep(200000);
+    }
+    if (rom != NULL) {
+        fseek(rom, 0, SEEK_END);
+        long tamanho = ftell(rom);
+        fseek(rom, 0, SEEK_SET);
+        unsigned char *rom_buffer = (unsigned char *)malloc(tamanho);
+        if (rom_buffer) {
+            fread(rom_buffer, 1, tamanho, rom);
+            Port_InitRomFromBuffer(rom_buffer, (size_t)tamanho);
+        }
+        fclose(rom);
+    }
+    AgbMain();
     return 0;
 }
