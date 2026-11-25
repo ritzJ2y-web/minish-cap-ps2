@@ -1,6 +1,6 @@
 EE_BIN = MINISH_PS2.ELF
 EE_OBJS = main_ps2.o
-EE_LIBS = -ldebug
+EE_LIBS = -ldebug -lpad -lpatches
 
 all: $(EE_BIN)
 
