@@ -13,6 +13,14 @@ jobs:
       - name: Baixar codigo do repositorio
         uses: actions/checkout@v4
 
+      - name: Baixar fonte do Project Picori e listar estrutura
+        run: |
+          git clone --depth 1 https://github.com picori_src
+          echo "=== PASTAS NA RAIZ ==="
+          ls -la picori_src
+          echo "=== ARQUIVOS DE PLATAFORMA ==="
+          find picori_src -maxdepth 3 -name "*.c" -o -name "*.h" -o -name "CMakeLists.txt" | head -n 60
+
       - name: Compilar ELF de PS2
         run: |
           sed -i 's/^        /\t/g; s/^    /\t/g; s/^  /\t/g' Makefile
