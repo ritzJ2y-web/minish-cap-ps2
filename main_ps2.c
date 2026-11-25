@@ -37,11 +37,6 @@ static GSTEXTURE gbaTex;
 void virtuappu_init(void) {
 }
 
-void Port_InitRomFromBuffer(const unsigned char *buf, size_t size) {
-    (void)buf;
-    (void)size;
-}
-
 void init_drivers(void) {
     SifInitRpc(0);
     while (!SifIopReset("", 0)) {};
@@ -105,11 +100,14 @@ int main(int argc, char *argv[]) {
     gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
     gsKit_init_screen(gsGlobal);
     gsKit_mode_switch(gsGlobal, GS_ONESHOT);
+    gsKit_clear(gsGlobal, GS_SETREG_RGBAQ(0x00, 0x00, 0x00, 0x00, 0x00));
+    gsKit_queue_exec(gsGlobal);
+    gsKit_sync_flip(gsGlobal);
     memset(&gbaTex, 0, sizeof(GSTEXTURE));
     gbaTex.Width = GBA_W;
     gbaTex.Height = GBA_H;
     gbaTex.PSM = GS_PSM_CT32;
-    gbaTex.Vram = gsKit_vram_alloc(gsGlobal, gsKit_texture_size(GBA_W, GBA_H, GS_PSM_CT32), GSKIT_ALLOC_USERBUFFER);
+    gbaTex.Vram = gsKit_vram_alloc(gsGlobal, gsKit_texture_size(GBA_W, GBA_H, GS_PSM_CT32), GSKIT_ALLOC_SIMPLE);
     gbaTex.Filter = GS_FILTER_NEAREST;
     virtuappu_init();
     FILE *rom = NULL;
