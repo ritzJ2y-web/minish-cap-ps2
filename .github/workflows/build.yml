@@ -13,22 +13,21 @@ jobs:
       - name: Baixar codigo do repositorio
         uses: actions/checkout@v4
 
-      - name: Localizar arquivos das variaveis e funcoes
+      - name: Baixar fonte do Project Picori
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh repo clone 999sian/tmc picori_src -- --depth 1
-          echo "=== ONDE ESTAO AS GLOBAIS ===" > where_files.txt
-          grep -rn "gPlayerEntity\b" picori_src/src picori_src/port | head -n 15 >> where_files.txt
-          echo "=== ONDE ESTAO BIOS E COLLISION ===" >> where_files.txt
-          grep -rn "LZ77UnCompVram\b\|GetActTileAtEntity\b\|Sqrt\b" picori_src/src picori_src/port | head -n 20 >> where_files.txt
-          echo "=== ONDE ESTAO BGM E SCRIPTS ===" >> where_files.txt
-          grep -rn "bgmTitleScreen\b\|script_BombMinish\b\|Entities_HouseInteriors1_Mayor_080D6210\b" picori_src/src picori_src/port picori_src/sound | head -n 20 >> where_files.txt
-          echo "=== XMAKE.LUA COMPLETO ===" >> where_files.txt
-          cat picori_src/xmake.lua >> where_files.txt
+          mkdir -p picori_src/build/USA/assets ps2_shims/SDL3
+          printf "typedef void SDL_Window;\ntypedef void SDL_Renderer;\ntypedef void SDL_Surface;\ntypedef int SDL_ScaleMode;\ntypedef int SDL_Event;\n" > ps2_shims/SDL3/SDL.h
 
-      - name: Disponibilizar relatorio
+      - name: Compilar ELF Completo de PS2
+        run: |
+          sed -i 's/^        /\t/g; s/^    /\t/g; s/^  /\t/g' Makefile
+          docker run --rm -u root -v "$PWD:/src" -w /src ps2dev/ps2dev:latest sh -c "apk add --no-cache make && make -j4 EE_CFLAGS_EXTRA=-w 2>&1 | grep -E 'error:|No such file|undefined reference|MINISH_PS2.ELF' | tail -n 35; exit \${PIPESTATUS}"
+
+      - name: Disponibilizar ELF para download
         uses: actions/upload-artifact@v4
         with:
-          name: WHERE_FILES
-          path: where_files.txt
+          name: MINISH_PS2_ELF
+          path: MINISH_PS2.ELF
