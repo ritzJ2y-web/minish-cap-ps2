@@ -20,6 +20,7 @@ jobs:
           gh repo clone 999sian/tmc picori_src -- --depth 1
           mkdir -p picori_src/build/USA/assets ps2_shims/SDL3
           printf "typedef void SDL_Window;\ntypedef void SDL_Renderer;\ntypedef void SDL_Surface;\ntypedef int SDL_ScaleMode;\ntypedef int SDL_Event;\n" > ps2_shims/SDL3/SDL.h
+          sed -i 's/_Static_assert/(void)sizeof/g; s/static_assert/(void)sizeof/g' picori_src/include/global.h
 
       - name: Compilar ELF Completo de PS2
         run: |
