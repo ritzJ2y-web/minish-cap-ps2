@@ -24,7 +24,7 @@ extern unsigned int size_bdmfs_fatfs_irx;
 extern unsigned char usbmass_bd_irx[];
 extern unsigned int size_usbmass_bd_irx;
 
-static char padBuf __attribute__((aligned(64)));
+static char padBuf[256] __attribute__((aligned(64)));
 
 void init_drivers() {
     SifInitRpc(0);
