@@ -15,7 +15,6 @@
 #include <dmaKit.h>
 #include "global.h"
 #include "virtuappu.h"
-#include "port_rom.h"
 
 #ifdef GBA_H
 #undef GBA_H
@@ -30,6 +29,8 @@ extern unsigned int size_bdmfs_fatfs_irx;
 extern unsigned char usbmass_bd_irx[];
 extern unsigned int size_usbmass_bd_irx;
 extern void AgbMain(void);
+extern void virtuappu_init(void);
+extern void PS2_SetLoadedRom(unsigned char *buf, size_t size);
 
 static char *padBuf = NULL;
 static GSGLOBAL *gsGlobal = NULL;
@@ -37,9 +38,6 @@ static GSTEXTURE gbaTex;
 
 #define PS2_GBA_W 240
 #define PS2_GBA_H 160
-
-void virtuappu_init(void) {
-}
 
 void init_drivers(void) {
     SifInitRpc(0);
@@ -109,13 +107,17 @@ int main(int argc, char *argv[]) {
     gsKit_clear(gsGlobal, GS_SETREG_RGBAQ(0x00, 0x00, 0x00, 0x00, 0x00));
     gsKit_queue_exec(gsGlobal);
     gsKit_sync_flip(gsGlobal);
+
     memset(&gbaTex, 0, sizeof(GSTEXTURE));
     gbaTex.Width = PS2_GBA_W;
     gbaTex.Height = PS2_GBA_H;
     gbaTex.PSM = GS_PSM_CT32;
     gbaTex.Vram = gsKit_vram_alloc(gsGlobal, gsKit_texture_size(PS2_GBA_W, PS2_GBA_H, GS_PSM_CT32), GSKIT_ALLOC_USERBUFFER);
     gbaTex.Filter = GS_FILTER_NEAREST;
+
+    memset(virtuappu_frame_buffer, 0, sizeof(virtuappu_frame_buffer));
     virtuappu_init();
+
     FILE *rom = NULL;
     for (int i = 0; i < 25; i++) {
         rom = fopen("mass:/minish.gba", "rb");
@@ -123,8 +125,23 @@ int main(int argc, char *argv[]) {
         usleep(200000);
     }
     if (rom != NULL) {
+        fseek(rom, 0, SEEK_END);
+        long tamanho = ftell(rom);
+        fseek(rom, 0, SEEK_SET);
+        if (tamanho > 0 && tamanho <= 0x2000000) {
+            unsigned char *rom_buffer = (unsigned char *)memalign(64, (size_t)tamanho);
+            if (rom_buffer) {
+                size_t lidos = fread(rom_buffer, 1, (size_t)tamanho, rom);
+                if (lidos > 0) {
+                    PS2_SetLoadedRom(rom_buffer, lidos);
+                } else {
+                    free(rom_buffer);
+                }
+            }
+        }
         fclose(rom);
     }
+
     AgbMain();
     return 0;
 }
