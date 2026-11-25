@@ -13,25 +13,22 @@ jobs:
       - name: Baixar codigo do repositorio
         uses: actions/checkout@v4
 
-      - name: Baixar fonte do Project Picori
+      - name: Localizar arquivos das variaveis e funcoes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh repo clone 999sian/tmc picori_src -- --depth 1
-          mkdir -p picori_src/build/USA/assets ps2_shims/SDL3
-          printf "typedef void SDL_Window;\ntypedef void SDL_Renderer;\ntypedef void SDL_Surface;\ntypedef int SDL_ScaleMode;\ntypedef int SDL_Event;\n" > ps2_shims/SDL3/SDL.h
+          echo "=== ONDE ESTAO AS GLOBAIS ===" > where_files.txt
+          grep -rn "gPlayerEntity\b" picori_src/src picori_src/port | head -n 15 >> where_files.txt
+          echo "=== ONDE ESTAO BIOS E COLLISION ===" >> where_files.txt
+          grep -rn "LZ77UnCompVram\b\|GetActTileAtEntity\b\|Sqrt\b" picori_src/src picori_src/port | head -n 20 >> where_files.txt
+          echo "=== ONDE ESTAO BGM E SCRIPTS ===" >> where_files.txt
+          grep -rn "bgmTitleScreen\b\|script_BombMinish\b\|Entities_HouseInteriors1_Mayor_080D6210\b" picori_src/src picori_src/port picori_src/sound | head -n 20 >> where_files.txt
+          echo "=== XMAKE.LUA COMPLETO ===" >> where_files.txt
+          cat picori_src/xmake.lua >> where_files.txt
 
-      - name: Compilar e listar simbolos finais
-        run: |
-          sed -i 's/^        /\t/g; s/^    /\t/g; s/^  /\t/g' Makefile
-          docker run --rm -u root -v "$PWD:/src" -w /src ps2dev/ps2dev:latest sh -c "apk add --no-cache make && make -j4 EE_CFLAGS_EXTRA=-w 2>&1 | tee full_build.log || true"
-          grep "undefined reference to" full_build.log | sed -E "s/.*undefined reference to \`([^']+)'.*/\1/" | sort -u > missing_symbols.txt
-          echo "=== TOTAL DE SIMBOLOS FALTANTES ==="
-          wc -l missing_symbols.txt
-          cat missing_symbols.txt
-
-      - name: Disponibilizar lista para download
+      - name: Disponibilizar relatorio
         uses: actions/upload-artifact@v4
         with:
-          name: MISSING_SYMBOLS
-          path: missing_symbols.txt
+          name: WHERE_FILES
+          path: where_files.txt
