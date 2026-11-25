@@ -34,9 +34,11 @@ extern void PS2_SetLoadedRom(unsigned char *buf, size_t size);
 static char *padBuf = NULL;
 static GSGLOBAL *gsGlobal = NULL;
 static GSTEXTURE gbaTex;
+static u32 *ps2Frame32 = NULL;
 
 #define PS2_GBA_W 240
 #define PS2_GBA_H 160
+#define PS2_GBA_PIXELS (PS2_GBA_W * PS2_GBA_H)
 
 void init_drivers(void) {
     SifInitRpc(0);
@@ -51,6 +53,23 @@ void init_drivers(void) {
     SifExecModuleBuffer(bdm_irx, size_bdm_irx, 0, NULL, NULL);
     SifExecModuleBuffer(bdmfs_fatfs_irx, size_bdmfs_fatfs_irx, 0, NULL, NULL);
     SifExecModuleBuffer(usbmass_bd_irx, size_usbmass_bd_irx, 0, NULL, NULL);
+}
+
+static void update_frame_texture_ptr(void) {
+    size_t bufBytes = sizeof(virtuappu_frame_buffer);
+    if (bufBytes <= PS2_GBA_PIXELS * 2 && ps2Frame32) {
+        const u16 *src16 = (const u16 *)virtuappu_frame_buffer;
+        for (int i = 0; i < PS2_GBA_PIXELS; i++) {
+            u16 px = src16[i];
+            u32 r = ((px & 0x001F) * 255) / 31;
+            u32 g = (((px >> 5) & 0x001F) * 255) / 31;
+            u32 b = (((px >> 10) & 0x001F) * 255) / 31;
+            ps2Frame32[i] = r | (g << 8) | (b << 16) | (0x80U << 24);
+        }
+        gbaTex.Mem = ps2Frame32;
+    } else {
+        gbaTex.Mem = (u32 *)virtuappu_frame_buffer;
+    }
 }
 
 void PS2_PresentFrameAndPollInput(void) {
@@ -79,7 +98,7 @@ void PS2_PresentFrameAndPollInput(void) {
     *(vu16 *)(gIoMem + 0x130) = gba_keys;
 
     if (gsGlobal) {
-        gbaTex.Mem = (u32 *)virtuappu_frame_buffer;
+        update_frame_texture_ptr();
         gsKit_texture_upload(gsGlobal, &gbaTex);
         gsKit_clear(gsGlobal, GS_SETREG_RGBAQ(0x00, 0x00, 0x00, 0x00, 0x00));
         gsKit_prim_sprite_texture(gsGlobal, &gbaTex,
@@ -101,6 +120,11 @@ int main(int argc, char *argv[]) {
     if (padBuf) {
         padInit(0);
         padPortOpen(0, 0, padBuf);
+    }
+
+    ps2Frame32 = (u32 *)memalign(64, PS2_GBA_PIXELS * sizeof(u32));
+    if (ps2Frame32) {
+        memset(ps2Frame32, 0, PS2_GBA_PIXELS * sizeof(u32));
     }
 
     dmaKit_init(D_CTRL_RELE_OFF, D_CTRL_MFD_OFF, D_CTRL_STS_UNSPEC, D_CTRL_STD_OFF, D_CTRL_RCYC_8, 1 << DMA_CHANNEL_GIF);
