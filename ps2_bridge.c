@@ -36,6 +36,11 @@ const unsigned char* PS2_GetLoadedRom(size_t *out_size) {
     return s_ps2_rom_buf;
 }
 
+/* Hooks fracos caso o projeto queira ler o buffer carregado pelo PS2 */
+__attribute__((weak)) const unsigned char* Port_PS2_GetRomData(size_t *out_size) {
+    return PS2_GetLoadedRom(out_size);
+}
+
 void VBlankIntrWait(void) {
     VBlankIntr();
     virtuappu_render_frame();
