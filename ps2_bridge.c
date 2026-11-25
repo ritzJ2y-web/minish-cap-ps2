@@ -15,7 +15,6 @@ extern u8 gOam[];
 #define G_BUF(name, sz) __attribute__((aligned(16))) u8 name[sz]
 
 G_BUF(gOam, 1024);
-G_BUF(gVram, 98304);
 
 int gPortSoftResetArmed = 0;
 jmp_buf gPortSoftResetJmp;
@@ -73,7 +72,6 @@ void LZ77UnCompWram(const void *src, void *dst) {
 void LZ77UnCompVram(const void *src, void *dst) { LZ77UnCompWram(src, dst); }
 u16 Sqrt(u32 num) { return (u16)sqrt((double)num); }
 s32 Div(s32 num, s32 denom) { return denom ? (num / denom) : 0; }
-s32 Mod(s32 num, s32 denom) { return denom ? (num % denom) : 0; }
 u64 DivAndModCombined(s32 num, s32 denom) {
     if (!denom) return 0;
     u32 q = (u32)(num / denom);
@@ -112,7 +110,6 @@ int Port_Config_PreferredRegion(void) { return 0; }
 void Port_Config_SetActiveSaveProfile(int p) { (void)p; }
 int Port_Config_TargetFps(void) { return 60; }
 void Port_Config_CycleTargetFps(void) {}
-int Port_DebugVerbose(void) { return 0; }
 int Port_Debug_NoclipEnabled(void) { return 0; }
 void Port_Debug_OnFlagSet(u32 f) { (void)f; }
 void Port_BugReport_NoteBadHitbox(void) {}
@@ -150,8 +147,6 @@ int Port_PPU_IsFullscreen(void) { return 1; }
 const char* Port_PPU_PresentationModeName(void) { return "PS2"; }
 void Port_PPU_ToggleFullscreen(void) {}
 int Port_PPU_WindowScale(void) { return 1; }
-int Port_Widescreen_EffectiveViewWidth(void) { return 240; }
-void Port_Widescreen_UpdateShadows(void) {}
 int Port_TTS_GetEnabled(void) { return 0; }
 void Port_TTS_Speak(const char *s) { (void)s; }
 void Port_TTS_Stop(void) {}
