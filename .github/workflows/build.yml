@@ -13,23 +13,20 @@ jobs:
       - name: Baixar codigo do repositorio
         uses: actions/checkout@v4
 
-      - name: Inspecionar pasta port do Project Picori
+      - name: Extrair cabecalhos da pasta port
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh repo clone 999sian/tmc picori_src -- --depth 1
-          echo "=== ARQUIVOS EM PORT ==="
-          find picori_src/port -maxdepth 3
-          echo "=== CABECALHOS EM PORT ==="
-          head -n 120 picori_src/port/*.h picori_src/port/*/*.h 2>/dev/null || true
+          echo "=== ESTRUTURA DA PASTA PORT ===" > relatorio_port.txt
+          find picori_src/port >> relatorio_port.txt
+          echo "=== XMAKE.LUA ===" >> relatorio_port.txt
+          cat picori_src/xmake.lua >> relatorio_port.txt
+          echo "=== CABECALHOS EM PORT ===" >> relatorio_port.txt
+          head -n 200 picori_src/port/*.h picori_src/port/*/*.h >> relatorio_port.txt 2>/dev/null || true
 
-      - name: Compilar ELF de PS2
-        run: |
-          sed -i 's/^        /\t/g; s/^    /\t/g; s/^  /\t/g' Makefile
-          docker run --rm -u root -v "$PWD:/src" -w /src ps2dev/ps2dev:latest sh -c "apk add --no-cache make && make"
-
-      - name: Disponibilizar ELF para download
+      - name: Disponibilizar relatorio para download
         uses: actions/upload-artifact@v4
         with:
-          name: MINISH_PS2_ELF
-          path: MINISH_PS2.ELF
+          name: RELATORIO_PORT
+          path: relatorio_port.txt
