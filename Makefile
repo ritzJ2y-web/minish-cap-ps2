@@ -39,6 +39,7 @@ PORT_C_SRCS = picori_src/port/ppu/src/virtuappu.c \
               picori_src/port/stubs_autogen.c \
               picori_src/port/data_stubs_autogen.c \
               picori_src/port/port_rom_stubs.c \
+              picori_src/port/port_linked_stubs.c \
               picori_src/port/port_region_data.c \
               picori_src/port/flag_remap_generated.c \
               picori_src/port/port_inline_ptrs.c \
@@ -48,7 +49,7 @@ PORT_C_SRCS = picori_src/port/ppu/src/virtuappu.c \
               picori_src/port/port_roll_attack_macro.c \
               picori_src/port/port_analog_movement.c
 
-ALL_C_SRCS = main_ps2.c $(GAME_SRCS) $(PORT_C_SRCS)
+ALL_C_SRCS = main_ps2.c ps2_bridge.c $(GAME_SRCS) $(PORT_C_SRCS)
 EE_OBJS = $(ALL_C_SRCS:.c=.o) usbd_irx.o bdm_irx.o bdmfs_fatfs_irx.o usbmass_bd_irx.o
 
 EE_INCS = -I$(PS2DEV)/gsKit/include -Ips2_shims -Ipicori_src/include -Ipicori_src/port -Ipicori_src/port/ppu/include -Ipicori_src/build/USA -Ipicori_src
