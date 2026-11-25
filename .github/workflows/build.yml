@@ -1,0 +1,25 @@
+name: Compilar PS2 ELF
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ps2dev/ps2dev:latest
+
+    steps:
+      - name: Baixar codigo do repositorio
+        uses: actions/checkout@v4
+
+      - name: Compilar ELF de PS2
+        run: make
+
+      - name: Disponibilizar ELF para download
+        uses: actions/upload-artifact@v4
+        with:
+          name: MINISH_PS2_ELF
+          path: MINISH_PS2.ELF
