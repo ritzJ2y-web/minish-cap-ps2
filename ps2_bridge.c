@@ -143,3 +143,52 @@ void Port_M4A_Backend_SetVSyncEnabled(int e) { (void)e; }
 void Port_M4A_Backend_SoundInit(void) {}
 void Port_M4A_Backend_StartSongById(u16 id, int p) { (void)id; (void)p; }
 void Port_M4A_Backend_StopPlayer(int p) { (void)p; }
+
+void Port_PPU_CyclePresentationMode(void) {}
+void Port_PPU_CycleWindowScale(void) {}
+int Port_PPU_IsFullscreen(void) { return 1; }
+const char* Port_PPU_PresentationModeName(void) { return "PS2"; }
+void Port_PPU_ToggleFullscreen(void) {}
+int Port_PPU_WindowScale(void) { return 1; }
+int Port_Widescreen_EffectiveViewWidth(void) { return 240; }
+void Port_Widescreen_UpdateShadows(void) {}
+int Port_TTS_GetEnabled(void) { return 0; }
+void Port_TTS_Speak(const char *s) { (void)s; }
+void Port_TTS_Stop(void) {}
+int Port_Voxel_IsDrawing(void) { return 0; }
+
+int Port_SoftSlots_GetActiveSlot(void) { return 0; }
+int Port_SoftSlots_GetAssignment(int s) { (void)s; return 0; }
+int Port_SoftSlots_GetEffectiveBItem(void) { return 0; }
+int Port_SoftSlots_IsBHeld(void) { return 0; }
+void Port_SoftSlots_NotifyPauseActive(int a) { (void)a; }
+void Port_SoftSlots_SetAssignment(int s, int i) { (void)s; (void)i; }
+
+int Port_Reborn_ConsumeJustResumed(void) { return 0; }
+int Port_Reborn_IsEnabled(void) { return 0; }
+void Port_Reborn_NotifyJustResumed(void) {}
+
+int Port_RandoFileMenu_IsOpen(void) { return 0; }
+void Port_RandoFileMenu_Open(void) {}
+int Port_RandoFileMenu_ShouldOpenForNewFile(void) { return 0; }
+void Port_RandoFileMenu_ToggleSidebar(void) {}
+void Port_RandoSave_ClearSlot(int s) { (void)s; }
+void Port_RandoSave_CopySlot(int a, int b) { (void)a; (void)b; }
+void Port_RandoSave_LoadSlot(int s) { (void)s; }
+void Port_RandoSave_SaveActiveSlot(void) {}
+void* RandoLogic_FindLocationByKey(const char *k) { (void)k; return NULL; }
+int RandoLogic_IsLoaded(void) { return 0; }
+int Rando_Entrance_RemapExit(int e) { return e; }
+int Rando_Entrance_RemapGreenWarp(int w) { return w; }
+int Rando_Entrance_RemapHole(int h) { return h; }
+void Rando_Homewarp_Request(void) {}
+int Rando_IsActive(void) { return 0; }
+int Rando_Music_Remap(int m) { return m; }
+int Rando_OverrideItem(int i) { return i; }
+const char* Rando_OverrideLocationKey(const char *k) { return k; }
+void Rando_Reset(void) {}
+int Rando_RouteDungeonItem(int i) { return i; }
+int Rando_Runtime_DamageMultiplier(void) { return 1; }
+void Rando_Runtime_OnNewFile(void) {}
+void Rando_Runtime_OpenTingleBrothers(void) {}
+void Rando_Runtime_Refresh(void) {}
