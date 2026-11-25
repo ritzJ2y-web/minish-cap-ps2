@@ -17,6 +17,10 @@
 #include "virtuappu.h"
 #include "port_rom.h"
 
+#ifdef GBA_H
+#undef GBA_H
+#endif
+
 extern unsigned char usbd_irx[];
 extern unsigned int size_usbd_irx;
 extern unsigned char bdm_irx[];
@@ -31,8 +35,8 @@ static char *padBuf = NULL;
 static GSGLOBAL *gsGlobal = NULL;
 static GSTEXTURE gbaTex;
 
-#define GBA_W 240
-#define GBA_H 160
+#define PS2_GBA_W 240
+#define PS2_GBA_H 160
 
 void virtuappu_init(void) {
 }
@@ -76,13 +80,13 @@ void PS2_PresentFrameAndPollInput(void) {
         }
     }
     *(vu16 *)(gIoMem + 0x130) = gba_keys;
-    if (gsGlobal && virtuappu_frame_buffer) {
+    if (gsGlobal && gbaTex.Vram != GSKIT_ALLOC_ERROR) {
         gbaTex.Mem = (u32 *)virtuappu_frame_buffer;
         gsKit_texture_upload(gsGlobal, &gbaTex);
         gsKit_clear(gsGlobal, GS_SETREG_RGBAQ(0x00, 0x00, 0x00, 0x00, 0x00));
         gsKit_prim_sprite_texture(gsGlobal, &gbaTex,
             0.0f, 0.0f, 0.0f, 0.0f,
-            gsGlobal->Width, gsGlobal->Height, GBA_W, GBA_H,
+            gsGlobal->Width, gsGlobal->Height, PS2_GBA_W, PS2_GBA_H,
             1, GS_SETREG_RGBAQ(0x80, 0x80, 0x80, 0x80, 0x00));
         gsKit_queue_exec(gsGlobal);
         gsKit_sync_flip(gsGlobal);
@@ -90,6 +94,8 @@ void PS2_PresentFrameAndPollInput(void) {
 }
 
 int main(int argc, char *argv[]) {
+    (void)argc;
+    (void)argv;
     init_drivers();
     padBuf = (char *)memalign(64, 256);
     padInit(0);
@@ -104,10 +110,10 @@ int main(int argc, char *argv[]) {
     gsKit_queue_exec(gsGlobal);
     gsKit_sync_flip(gsGlobal);
     memset(&gbaTex, 0, sizeof(GSTEXTURE));
-    gbaTex.Width = GBA_W;
-    gbaTex.Height = GBA_H;
+    gbaTex.Width = PS2_GBA_W;
+    gbaTex.Height = PS2_GBA_H;
     gbaTex.PSM = GS_PSM_CT32;
-    gbaTex.Vram = gsKit_vram_alloc(gsGlobal, gsKit_texture_size(GBA_W, GBA_H, GS_PSM_CT32), GSKIT_ALLOC_SIMPLE);
+    gbaTex.Vram = gsKit_vram_alloc(gsGlobal, gsKit_texture_size(PS2_GBA_W, PS2_GBA_H, GS_PSM_CT32), GSKIT_ALLOC_USERBUFFER);
     gbaTex.Filter = GS_FILTER_NEAREST;
     virtuappu_init();
     FILE *rom = NULL;
