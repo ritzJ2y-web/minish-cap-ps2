@@ -21,13 +21,17 @@ jobs:
           mkdir -p picori_src/build/USA/assets ps2_shims/SDL3
           printf "typedef void SDL_Window;\ntypedef void SDL_Renderer;\ntypedef void SDL_Surface;\ntypedef int SDL_ScaleMode;\ntypedef int SDL_Event;\n" > ps2_shims/SDL3/SDL.h
 
-      - name: Compilar ELF Completo de PS2
+      - name: Compilar e listar simbolos finais
         run: |
           sed -i 's/^        /\t/g; s/^    /\t/g; s/^  /\t/g' Makefile
-          docker run --rm -u root -v "$PWD:/src" -w /src ps2dev/ps2dev:latest sh -c "apk add --no-cache make && make -j4 EE_CFLAGS_EXTRA=-w 2>&1 | grep -E 'error:|No such file|undefined reference|MINISH_PS2.ELF' | tail -n 35; exit \${PIPESTATUS}"
+          docker run --rm -u root -v "$PWD:/src" -w /src ps2dev/ps2dev:latest sh -c "apk add --no-cache make && make -j4 EE_CFLAGS_EXTRA=-w 2>&1 | tee full_build.log || true"
+          grep "undefined reference to" full_build.log | sed -E "s/.*undefined reference to \`([^']+)'.*/\1/" | sort -u > missing_symbols.txt
+          echo "=== TOTAL DE SIMBOLOS FALTANTES ==="
+          wc -l missing_symbols.txt
+          cat missing_symbols.txt
 
-      - name: Disponibilizar ELF para download
+      - name: Disponibilizar lista para download
         uses: actions/upload-artifact@v4
         with:
-          name: MINISH_PS2_ELF
-          path: MINISH_PS2.ELF
+          name: MISSING_SYMBOLS
+          path: missing_symbols.txt
