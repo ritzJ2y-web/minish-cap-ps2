@@ -34,6 +34,14 @@ static GSTEXTURE gbaTex;
 #define GBA_W 240
 #define GBA_H 160
 
+void virtuappu_init(void) {
+}
+
+void Port_InitRomFromBuffer(const unsigned char *buf, size_t size) {
+    (void)buf;
+    (void)size;
+}
+
 void init_drivers(void) {
     SifInitRpc(0);
     while (!SifIopReset("", 0)) {};
