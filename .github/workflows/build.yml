@@ -15,6 +15,7 @@ jobs:
 
       - name: Compilar ELF de PS2
         run: |
+          sed -i 's/^        /\t/g; s/^    /\t/g; s/^  /\t/g' Makefile
           docker run --rm -u root -v "$PWD:/src" -w /src ps2dev/ps2dev:latest sh -c "apk add --no-cache make && make"
 
       - name: Disponibilizar ELF para download
