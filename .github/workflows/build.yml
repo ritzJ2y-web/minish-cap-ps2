@@ -24,7 +24,7 @@ jobs:
       - name: Compilar ELF Completo de PS2
         run: |
           sed -i 's/^        /\t/g; s/^    /\t/g; s/^  /\t/g' Makefile
-          docker run --rm -u root -v "$PWD:/src" -w /src ps2dev/ps2dev:latest sh -c "apk add --no-cache make && make -j4 EE_CFLAGS_EXTRA=-w 2>&1 | grep -E 'error:|No such file|undefined reference|MINISH_PS2.ELF' | tail -n 35; exit \${PIPESTATUS}"
+          docker run --rm -u root -v "$PWD:/src" -w /src ps2dev/ps2dev:latest sh -c "apk add --no-cache make && make -j4 EE_CFLAGS_EXTRA=-w 2>&1 | tail -n 60; exit \${PIPESTATUS}"
 
       - name: Disponibilizar ELF para download
         uses: actions/upload-artifact@v4
