@@ -45,7 +45,6 @@ PORT_C_SRCS = picori_src/port/ppu/src/virtuappu.c \
               picori_src/port/port_script_addrs.c \
               picori_src/port/port_offset_remap.c \
               picori_src/port/port_figurines.c \
-              picori_src/port/port_bios.c \
               picori_src/port/port_softslots.c \
               picori_src/port/port_roll_attack_macro.c \
               picori_src/port/port_analog_movement.c
@@ -53,8 +52,8 @@ PORT_C_SRCS = picori_src/port/ppu/src/virtuappu.c \
 ALL_C_SRCS = main_ps2.c $(GAME_SRCS) $(PORT_C_SRCS)
 EE_OBJS = $(ALL_C_SRCS:.c=.o) usbd_irx.o bdm_irx.o bdmfs_fatfs_irx.o usbmass_bd_irx.o
 
-EE_INCS = -I$(PS2DEV)/gsKit/include -Ipicori_src/include -Ipicori_src/port -Ipicori_src/port/ppu/include -Ipicori_src
-EE_CFLAGS = -DTMC_N64 -DPC_PORT -DNON_MATCHING -DUSE_HDMA -DUSA -DENGLISH -DREVISION=0 -DMODE1_GBA_WIDTH=240 -funsigned-char -fno-strict-aliasing -fwrapv -O2 -Wno-implicit-function-declaration -Wno-incompatible-pointer-types
+EE_INCS = -I$(PS2DEV)/gsKit/include -Ipicori_src/include -Ipicori_src/port -Ipicori_src/port/ppu/include -Ipicori_src/build/USA -Ipicori_src
+EE_CFLAGS = -std=gnu11 -DTMC_N64 -DPC_PORT -DNON_MATCHING -DUSE_HDMA -DUSA -DENGLISH -DREVISION=0 -DMODE1_GBA_WIDTH=240 -funsigned-char -fno-strict-aliasing -fwrapv -O2 -Wno-implicit-function-declaration -Wno-incompatible-pointer-types
 EE_LDFLAGS = -L$(PS2DEV)/gsKit/lib
 EE_LIBS = -lgskit -ldmakit -lpad -lpatches -lm
 
