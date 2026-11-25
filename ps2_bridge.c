@@ -4,150 +4,137 @@
 #include <math.h>
 #include <setjmp.h>
 #include <tamtypes.h>
-#include "global.h"
-#include "main.h"
-#include "player.h"
-#include "entity.h"
-#include "save.h"
-#include "room.h"
-#include "area.h"
-#include "screen.h"
-#include "message.h"
-#include "sound.h"
-#include "ui.h"
-#include "script.h"
-#include "fade.h"
-#include "interrupts.h"
-#include "structures.h"
-#include "common.h"
-#include "virtuappu.h"
-#include "port_rom.h"
 
 extern void PS2_PresentFrameAndPollInput(void);
 extern void VBlankIntr(void);
+extern void virtuappu_render_frame(void);
+extern u8 gVram[];
+extern u16 gOam[];
 
-Main gMain;
-PlayerEntity gPlayerEntity;
-PlayerState gPlayerState;
-Entity gEntities[MAX_ENTITIES];
-EntityList gEntityLists;
-EntityList gEntityListsBackup;
-Entity gAuxPlayerEntities;
-Entity gPlayerClones;
-Entity* gCarriedEntity = NULL;
+#define G_BUF(name, sz) __attribute__((aligned(16))) u8 name[sz]
+
+G_BUF(gMain, 256);
+G_BUF(gPlayerEntity, 512);
+G_BUF(gPlayerState, 512);
+G_BUF(gEntities, 32768);
+G_BUF(gEntityLists, 512);
+G_BUF(gEntityListsBackup, 512);
+G_BUF(gAuxPlayerEntities, 2048);
+G_BUF(gPlayerClones, 2048);
+void* gCarriedEntity = NULL;
 u8 gEntCount = 0;
 u8 gManagerCount = 0;
 u8 gCollidableCount = 0;
-Entity* gCollidableList[MAX_ENTITIES];
-u8 gCollisionMtx;
+G_BUF(gCollidableList, 512);
+G_BUF(gCollisionMtx, 256);
 
-RoomControls gRoomControls;
-RoomTransition gRoomTransition;
-RoomVars gRoomVars;
-CurrentRoomProperties gCurrentRoomProperties;
-u8 gRoomMemory[0x1000];
-u8 gCurrentRoomMemory[0x100];
-Area gArea;
-AreaTable gAreaTable;
-void* gAreaRoomHeaders;
-void* gAreaRoomMaps;
-void* gAreaTileSets;
-void* gAreaTiles;
+G_BUF(gRoomControls, 512);
+G_BUF(gRoomTransition, 512);
+G_BUF(gRoomVars, 512);
+G_BUF(gCurrentRoomProperties, 256);
+G_BUF(gRoomMemory, 4096);
+G_BUF(gCurrentRoomMemory, 512);
+G_BUF(gArea, 512);
+G_BUF(gAreaTable, 1024);
+G_BUF(gAreaRoomHeaders, 2048);
+G_BUF(gAreaRoomMaps, 2048);
+G_BUF(gAreaTileSets, 2048);
+G_BUF(gAreaTiles, 2048);
 
-SaveFile gSave;
-Screen gScreen;
-FadeControl gFadeControl;
-Message gMessage;
-UI gUI;
-HUD gHUD;
-Input gInput;
-OAMControls gOAMControls;
-OamData gOamCmd;
-PaletteBuffer gPaletteBuffer;
-PaletteBuffer gPaletteBufferBackup;
-u16 gUsedPalettes;
-u8 gPaletteList;
-u8 gPalette_549;
-u8 gGFXSlots;
-u8 gVBlankDMA;
+G_BUF(gSave, 4096);
+G_BUF(gScreen, 512);
+G_BUF(gFadeControl, 256);
+G_BUF(gMessage, 256);
+G_BUF(gUI, 512);
+G_BUF(gHUD, 512);
+G_BUF(gInput, 128);
+G_BUF(gOAMControls, 2048);
+G_BUF(gOamCmd, 64);
+G_BUF(gPaletteBuffer, 2048);
+G_BUF(gPaletteBufferBackup, 2048);
+G_BUF(gUsedPalettes, 256);
+G_BUF(gPaletteList, 256);
+G_BUF(gPalette_549, 256);
+G_BUF(gGFXSlots, 512);
+G_BUF(gVBlankDMA, 256);
 u8 gUpdateVisibleTiles = 0;
 u8 gUpdateContext = 0;
 u32 gRand = 0x12345678;
 
-MapData gMapTop;
-MapData gMapBottom;
-u16 gMapData[0x4000];
-u16 gMapDataTopSpecial[0x1000];
-u16 gMapDataBottomSpecial[0x1000];
-u16 gTilesForSpecialTiles;
-u8 gBgAnimations;
-u8 gDiggingCaveEntranceTransition;
-u8 gDungeonMap;
-u8 gDungeonNames;
-u8 gFuseInfo;
-u8 gLilypadRails;
-u8 gPauseMenuOptions;
-u8 gPossibleInteraction;
-u8 gPriorityHandler;
-u8 gShakeOffsets;
-u8 gSmallChests;
-u8 gTextGfxBuffer[0x2000];
-u8 gTextRender;
-u8 gTranslations;
-u8 gZeldaFollowerText;
-u8 _gMenuSharedStorage[0x2000];
-u8 gzHeap[0x4000];
+G_BUF(gMapTop, 512);
+G_BUF(gMapBottom, 512);
+G_BUF(gMapData, 32768);
+G_BUF(gMapDataTopSpecial, 8192);
+G_BUF(gMapDataBottomSpecial, 8192);
+G_BUF(gTilesForSpecialTiles, 2048);
+G_BUF(gBgAnimations, 512);
+G_BUF(gDiggingCaveEntranceTransition, 256);
+G_BUF(gDungeonMap, 512);
+G_BUF(gDungeonNames, 512);
+G_BUF(gFuseInfo, 512);
+G_BUF(gLilypadRails, 512);
+G_BUF(gPauseMenuOptions, 256);
+G_BUF(gPossibleInteraction, 256);
+G_BUF(gPriorityHandler, 256);
+G_BUF(gShakeOffsets, 256);
+G_BUF(gSmallChests, 512);
+G_BUF(gTextGfxBuffer, 8192);
+G_BUF(gTextRender, 512);
+G_BUF(gTranslations, 256);
+G_BUF(gZeldaFollowerText, 256);
+G_BUF(_gMenuSharedStorage, 8192);
+G_BUF(gzHeap, 16384);
 
-ActiveItem gActiveItems;
-ActiveScriptInfo gActiveScriptInfo;
-ScriptExecutionContext gScriptExecutionContextArray;
-ScriptExecutionContext gPlayerScriptExecutionContext;
-EntityScriptContext gEntityScriptCtxTable[MAX_ENTITIES];
-u8 gExtraFrameOffsets;
-u8 gFixedTypeGfxData;
-u8 gFrameObjLists;
-u8 gMoreSpritePtrs;
-u8 gNPCData;
-void* gSpritePtrs;
+G_BUF(gActiveItems, 1024);
+G_BUF(gActiveScriptInfo, 256);
+G_BUF(gScriptExecutionContextArray, 2048);
+G_BUF(gPlayerScriptExecutionContext, 512);
+G_BUF(gEntityScriptCtxTable, 4096);
+G_BUF(gExtraFrameOffsets, 512);
+G_BUF(gFixedTypeGfxData, 512);
+G_BUF(gFrameObjLists, 512);
+G_BUF(gMoreSpritePtrs, 512);
+G_BUF(gNPCData, 512);
+G_BUF(gSpritePtrs, 16384);
 u32 gSpritePtrsLoadedCount = 0;
 const u32 kMaxSpritePtrs = 2048;
-u8 gSpriteAnimations_322;
-u8 gSpriteAnimations_GhostBrothers;
-u8 gUnk_02000010[0x40];
-u8 gUnk_02000040[0x80];
-u8 gUnk_020000C0[0x100];
-u8 gUnk_02006F00[0x400];
-u8 gUnk_0200B640[0x400];
-u8 gUnk_02017830[0x200];
-u8 gUnk_02017AA0[0x1000];
-u8 gUnk_02018EA0[0x20];
-u8 gUnk_02018EB0[0x30];
-u8 gUnk_02018EE0[0x200];
-u8 gUnk_02021F00[0x800];
-u8 gUnk_020227DC[0x20];
-u8 gUnk_020227E8[0x20];
-u8 gUnk_020227F0[0x20];
-u8 gUnk_020227F8[0x20];
-u8 gUnk_02022800[0x40];
-u8 gUnk_02022830[0x200];
-u8 gUnk_02024048[0x600];
-u8 gUnk_020246B0[0x1000];
-u8 gUnk_020342F8[0x200];
-u8 gUnk_02034480[0x20];
-u8 gUnk_02034492[0x20];
-u8 gUnk_020344A0[0x1000];
-u8 gUnk_020354C0[0x1000];
-u8 gUnk_02036BB8[0x1000];
-u8 gUnk_03000C30[0x400];
-u8 gUnk_03001020[0x400];
+G_BUF(gSpriteAnimations_322, 512);
+G_BUF(gSpriteAnimations_GhostBrothers, 512);
+G_BUF(gUnk_02000010, 128);
+G_BUF(gUnk_02000040, 256);
+G_BUF(gUnk_020000C0, 512);
+G_BUF(gUnk_02006F00, 1024);
+G_BUF(gUnk_0200B640, 1024);
+G_BUF(gUnk_02017830, 512);
+G_BUF(gUnk_02017AA0, 4096);
+G_BUF(gUnk_02018EA0, 64);
+G_BUF(gUnk_02018EB0, 64);
+G_BUF(gUnk_02018EE0, 512);
+G_BUF(gUnk_02021F00, 2048);
+G_BUF(gUnk_020227DC, 64);
+G_BUF(gUnk_020227E8, 64);
+G_BUF(gUnk_020227F0, 64);
+G_BUF(gUnk_020227F8, 64);
+G_BUF(gUnk_02022800, 128);
+G_BUF(gUnk_02022830, 512);
+G_BUF(gUnk_02024048, 2048);
+G_BUF(gUnk_020246B0, 4096);
+G_BUF(gUnk_020342F8, 512);
+G_BUF(gUnk_02034480, 64);
+G_BUF(gUnk_02034492, 64);
+G_BUF(gUnk_020344A0, 4096);
+G_BUF(gUnk_020354C0, 4096);
+G_BUF(gUnk_02036BB8, 4096);
+G_BUF(gUnk_03000C30, 1024);
+G_BUF(gUnk_03001020, 1024);
 
-u8 gMPlayInfos;
-u8 gMPlayInfos2;
-u8 gMPlayMemAccArea;
-u8 gMPlayTracks;
-u8 gSoundPlayingInfo;
+G_BUF(gMPlayInfos, 512);
+G_BUF(gMPlayInfos2, 512);
+G_BUF(gMPlayMemAccArea, 512);
+G_BUF(gMPlayTracks, 2048);
+G_BUF(gSoundPlayingInfo, 256);
 
-vu16 gPortIntrCheck = 0;
+u16 gPortIntrCheck = 0;
 int gPortSoftResetArmed = 0;
 jmp_buf gPortSoftResetJmp;
 int n64_post = 0;
@@ -205,10 +192,15 @@ void LZ77UnCompVram(const void *src, void *dst) { LZ77UnCompWram(src, dst); }
 u16 Sqrt(u32 num) { return (u16)sqrt((double)num); }
 s32 Div(s32 num, s32 denom) { return denom ? (num / denom) : 0; }
 s32 Mod(s32 num, s32 denom) { return denom ? (num % denom) : 0; }
-s32 DivAndModCombined(s32 num, s32 denom) { return denom ? (num / denom) : 0; }
+u64 DivAndModCombined(s32 num, s32 denom) {
+    if (!denom) return 0;
+    u32 q = (u32)(num / denom);
+    u32 r = (u32)(num % denom);
+    return ((u64)r << 32) | q;
+}
 
 void RegisterRamReset(u32 flags) {
-    if (flags & 0x04) memset(gPaletteBuffer.palette, 0, sizeof(gPaletteBuffer.palette));
+    if (flags & 0x04) memset(gPaletteBuffer, 0, 1024);
     if (flags & 0x08) memset(gVram, 0, 0x18000);
     if (flags & 0x10) memset(gOam, 0, 0x400);
 }
@@ -217,8 +209,9 @@ void SoftReset(u32 resetFlags) {
     if (gPortSoftResetArmed) longjmp(gPortSoftResetJmp, 1);
 }
 
-void BgAffineSet(const void *src, void *dst, s32 count) {}
-void ObjAffineSet(const void *src, void *dst, s32 count, s32 offset) {}
+void BgAffineSet(const void *src, void *dst, int count) {}
+void ObjAffineSet(const void *src, void *dst, int count, int offset) {}
+
 int Port_Config_GetAnalogDeadzone(void) { return 40; }
 int Port_Config_GetHoldToAdvanceText(void) { return 0; }
 void Port_Config_GetLeftStick(s16 *x, s16 *y) { if (x) *x = 0; if (y) *y = 0; }
