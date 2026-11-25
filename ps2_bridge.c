@@ -20,6 +20,22 @@ int gPortSoftResetArmed = 0;
 jmp_buf gPortSoftResetJmp;
 int n64_post = 0;
 
+static unsigned char *s_ps2_rom_buf = NULL;
+static size_t s_ps2_rom_size = 0;
+
+void PS2_SetLoadedRom(unsigned char *buf, size_t size) {
+    if (s_ps2_rom_buf) {
+        free(s_ps2_rom_buf);
+    }
+    s_ps2_rom_buf = buf;
+    s_ps2_rom_size = size;
+}
+
+const unsigned char* PS2_GetLoadedRom(size_t *out_size) {
+    if (out_size) *out_size = s_ps2_rom_size;
+    return s_ps2_rom_buf;
+}
+
 void VBlankIntrWait(void) {
     VBlankIntr();
     virtuappu_render_frame();
