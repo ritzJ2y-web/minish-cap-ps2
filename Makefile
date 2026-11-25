@@ -45,7 +45,6 @@ PORT_C_SRCS = picori_src/port/ppu/src/virtuappu.c \
               picori_src/port/port_script_addrs.c \
               picori_src/port/port_offset_remap.c \
               picori_src/port/port_figurines.c \
-              picori_src/port/port_softslots.c \
               picori_src/port/port_roll_attack_macro.c \
               picori_src/port/port_analog_movement.c
 
