@@ -99,3 +99,47 @@ void BgAffineSet(const void *src, void *dst, int count) {
 void ObjAffineSet(const void *src, void *dst, int count, int offset) {
     (void)src; (void)dst; (void)count; (void)offset;
 }
+
+int Port_Config_GetAnalogDeadzone(void) { return 40; }
+int Port_Config_GetHoldToAdvanceText(void) { return 0; }
+void Port_Config_GetLeftStick(s16 *x, s16 *y) { if (x) *x = 0; if (y) *y = 0; }
+int Port_Config_GetRollAttackMacroEnabled(void) { return 0; }
+int Port_Config_InputEdgePressed(int action) { (void)action; return 0; }
+int Port_Config_InputPressed(int action) { (void)action; return 0; }
+int Port_Config_PortSettingsMenuEnabled(void) { return 0; }
+int Port_Config_PreferredLanguage(void) { return 0; }
+int Port_Config_PreferredRegion(void) { return 0; }
+void Port_Config_SetActiveSaveProfile(int p) { (void)p; }
+int Port_Config_TargetFps(void) { return 60; }
+void Port_Config_CycleTargetFps(void) {}
+int Port_DebugVerbose(void) { return 0; }
+int Port_Debug_NoclipEnabled(void) { return 0; }
+void Port_Debug_OnFlagSet(u32 f) { (void)f; }
+void Port_BugReport_NoteBadHitbox(void) {}
+void Port_LevelEditor_OnRoomLoad(void) {}
+void Port_LogAssetLoaderStatus(void) {}
+void Port_LogTextLookup(void) {}
+
+int Port_AreSpritePtrsLoadedFromAssets(void) { return 0; }
+int Port_IsAreaTablePtrFromAssets(const void *p) { (void)p; return 0; }
+int Port_IsLoadedAssetBytes(const void *p) { (void)p; return 0; }
+int Port_IsRoomHeaderPtrReadable(const void *p) { return p != NULL; }
+void* Port_GetMapAssetDataByIndex(u32 idx) { (void)idx; return NULL; }
+void* Port_GetSpriteAnimationData(u32 idx) { (void)idx; return NULL; }
+void Port_LoadAreaTablesFromAssets(void) {}
+void Port_LoadGfxGroupFromAssets(u32 g) { (void)g; }
+void Port_LoadPaletteGroupFromAssets(u32 g) { (void)g; }
+void Port_LoadSpritePtrsFromAssets(void) {}
+void Port_LoadTextsFromAssets(void) {}
+void Port_RefreshAreaDataFromAssets(void) {}
+
+int Port_AudioMute_ShouldSuppress(int cat) { (void)cat; return 1; }
+void Port_M4A_Backend_ContinuePlayer(int p) { (void)p; }
+int Port_M4A_Backend_IsPlayerActive(int p) { (void)p; return 0; }
+void Port_M4A_Backend_SetSoundMode(u32 m) { (void)m; }
+void Port_M4A_Backend_SetTrackPan(int p, int t, s8 pan) { (void)p; (void)t; (void)pan; }
+void Port_M4A_Backend_SetTrackVolume(int p, int t, u16 vol) { (void)p; (void)t; (void)vol; }
+void Port_M4A_Backend_SetVSyncEnabled(int e) { (void)e; }
+void Port_M4A_Backend_SoundInit(void) {}
+void Port_M4A_Backend_StartSongById(u16 id, int p) { (void)id; (void)p; }
+void Port_M4A_Backend_StopPlayer(int p) { (void)p; }
