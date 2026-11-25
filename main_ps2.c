@@ -77,13 +77,15 @@ void PS2_PresentFrameAndPollInput(void) {
         }
     }
     *(vu16 *)(gIoMem + 0x130) = gba_keys;
-    if (gsGlobal && gbaTex.Vram != GSKIT_ALLOC_ERROR) {
+
+    if (gsGlobal) {
         gbaTex.Mem = (u32 *)virtuappu_frame_buffer;
         gsKit_texture_upload(gsGlobal, &gbaTex);
         gsKit_clear(gsGlobal, GS_SETREG_RGBAQ(0x00, 0x00, 0x00, 0x00, 0x00));
         gsKit_prim_sprite_texture(gsGlobal, &gbaTex,
             0.0f, 0.0f, 0.0f, 0.0f,
-            gsGlobal->Width, gsGlobal->Height, PS2_GBA_W, PS2_GBA_H,
+            (float)gsGlobal->Width, (float)gsGlobal->Height,
+            (float)PS2_GBA_W, (float)PS2_GBA_H,
             1, GS_SETREG_RGBAQ(0x80, 0x80, 0x80, 0x80, 0x00));
         gsKit_queue_exec(gsGlobal);
         gsKit_sync_flip(gsGlobal);
@@ -94,33 +96,41 @@ int main(int argc, char *argv[]) {
     (void)argc;
     (void)argv;
     init_drivers();
+
     padBuf = (char *)memalign(64, 256);
-    padInit(0);
-    padPortOpen(0, 0, padBuf);
+    if (padBuf) {
+        padInit(0);
+        padPortOpen(0, 0, padBuf);
+    }
+
     dmaKit_init(D_CTRL_RELE_OFF, D_CTRL_MFD_OFF, D_CTRL_STS_UNSPEC, D_CTRL_STD_OFF, D_CTRL_RCYC_8, 1 << DMA_CHANNEL_GIF);
     dmaKit_chan_init(DMA_CHANNEL_GIF);
-    gsGlobal = gsKit_init_global();
-    gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
-    gsKit_init_screen(gsGlobal);
-    gsKit_mode_switch(gsGlobal, GS_ONESHOT);
-    gsKit_clear(gsGlobal, GS_SETREG_RGBAQ(0x00, 0x00, 0x00, 0x00, 0x00));
-    gsKit_queue_exec(gsGlobal);
-    gsKit_sync_flip(gsGlobal);
 
-    memset(&gbaTex, 0, sizeof(GSTEXTURE));
-    gbaTex.Width = PS2_GBA_W;
-    gbaTex.Height = PS2_GBA_H;
-    gbaTex.PSM = GS_PSM_CT32;
-    gbaTex.Vram = gsKit_vram_alloc(gsGlobal, gsKit_texture_size(PS2_GBA_W, PS2_GBA_H, GS_PSM_CT32), GSKIT_ALLOC_USERBUFFER);
-    gbaTex.Filter = GS_FILTER_NEAREST;
+    gsGlobal = gsKit_init_global();
+    if (gsGlobal) {
+        gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
+        gsKit_init_screen(gsGlobal);
+        gsKit_mode_switch(gsGlobal, GS_ONESHOT);
+        gsKit_clear(gsGlobal, GS_SETREG_RGBAQ(0x00, 0x00, 0x00, 0x00, 0x00));
+        gsKit_queue_exec(gsGlobal);
+        gsKit_sync_flip(gsGlobal);
+
+        memset(&gbaTex, 0, sizeof(GSTEXTURE));
+        gbaTex.Width = PS2_GBA_W;
+        gbaTex.Height = PS2_GBA_H;
+        gbaTex.PSM = GS_PSM_CT32;
+        gbaTex.Filter = GS_FILTER_NEAREST;
+        u32 alloc = gsKit_vram_alloc(gsGlobal, gsKit_texture_size(PS2_GBA_W, PS2_GBA_H, GS_PSM_CT32), GSKIT_ALLOC_USERBUFFER);
+        gbaTex.Vram = (alloc != GSKIT_ALLOC_ERROR) ? alloc : 0;
+    }
 
     memset(virtuappu_frame_buffer, 0, sizeof(virtuappu_frame_buffer));
 
     FILE *rom = NULL;
-    for (int i = 0; i < 25; i++) {
+    for (int i = 0; i < 15; i++) {
         rom = fopen("mass:/minish.gba", "rb");
         if (rom != NULL) break;
-        usleep(200000);
+        usleep(150000);
     }
     if (rom != NULL) {
         fseek(rom, 0, SEEK_END);
