@@ -123,14 +123,6 @@ int main(int argc, char *argv[]) {
         usleep(200000);
     }
     if (rom != NULL) {
-        fseek(rom, 0, SEEK_END);
-        long tamanho = ftell(rom);
-        fseek(rom, 0, SEEK_SET);
-        unsigned char *rom_buffer = (unsigned char *)malloc(tamanho);
-        if (rom_buffer) {
-            fread(rom_buffer, 1, tamanho, rom);
-            Port_InitRomFromBuffer(rom_buffer, (size_t)tamanho);
-        }
         fclose(rom);
     }
     AgbMain();
