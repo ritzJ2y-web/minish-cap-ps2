@@ -1,4 +1,32 @@
+name: Compilar Minish Cap PS2
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar codigo do repositorio
+        uses: actions/checkout@v4
+
+      - name: Baixar fonte do Project Picori
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh repo clone 999sian/tmc picori_src -- --depth 1
+          mkdir -p picori_src/build/USA/assets
+
       - name: Compilar ELF Completo de PS2
         run: |
           sed -i 's/^        /\t/g; s/^    /\t/g; s/^  /\t/g' Makefile
-          docker run --rm -u root -v "$PWD:/src" -w /src ps2dev/ps2dev:latest sh -c "apk add --no-cache make && make -j4 CFLAGS_EXTRA=-w 2>&1 | tee build.log; echo '=== ERROS ENCONTRADOS ==='; grep -E 'error:|No such file|undefined reference' build.log | tail -n 30; exit \${PIPESTATUS[0]}"
+          docker run --rm -u root -v "$PWD:/src" -w /src ps2dev/ps2dev:latest sh -c "apk add --no-cache make && make -j4 EE_CFLAGS_EXTRA=-w 2>&1 | grep -E 'error:|No such file|undefined reference|MINISH_PS2.ELF' | tail -n 35; exit \${PIPESTATUS}"
+
+      - name: Disponibilizar ELF para download
+        uses: actions/upload-artifact@v4
+        with:
+          name: MINISH_PS2_ELF
+          path: MINISH_PS2.ELF
