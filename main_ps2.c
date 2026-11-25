@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <malloc.h>
 #include <tamtypes.h>
 #include <sifrpc.h>
 #include <kernel.h>
@@ -26,7 +27,7 @@ extern unsigned char usbmass_bd_irx[];
 extern unsigned int size_usbmass_bd_irx;
 extern void AgbMain(void);
 
-static char padBuf __attribute__((aligned(64)));
+static char *padBuf = NULL;
 static GSGLOBAL *gsGlobal = NULL;
 static GSTEXTURE gbaTex;
 
@@ -87,6 +88,7 @@ void PS2_PresentFrameAndPollInput(void) {
 
 int main(int argc, char *argv[]) {
     init_drivers();
+    padBuf = (char *)memalign(64, 256);
     padInit(0);
     padPortOpen(0, 0, padBuf);
     dmaKit_init(D_CTRL_RELE_OFF, D_CTRL_MFD_OFF, D_CTRL_STS_UNSPEC, D_CTRL_STD_OFF, D_CTRL_RCYC_8, 1 << DMA_CHANNEL_GIF);
