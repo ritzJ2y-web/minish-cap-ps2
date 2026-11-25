@@ -8,10 +8,11 @@
 extern void PS2_PresentFrameAndPollInput(void);
 extern void VBlankIntr(void);
 extern void virtuappu_render_frame(void);
-extern u8 gVram[];
-extern u16 gOam[];
 
 #define G_BUF(name, sz) __attribute__((aligned(16))) u8 name[sz]
+
+G_BUF(gOam, 1024);
+G_BUF(gVram, 98304);
 
 G_BUF(gMain, 256);
 G_BUF(gPlayerEntity, 512);
